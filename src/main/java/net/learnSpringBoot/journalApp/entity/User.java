@@ -1,22 +1,30 @@
-package net.engineeringdigest.journalApp.entity;
+package net.learnSpringBoot.journalApp.entity;
 
+
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.lang.annotation.Documented;
 
 // POJO (plain old java object)
+@Document
 public class User {
-    private int id;
+    @Id
+    private ObjectId id;
     private String name;
     private String email;
     private String password;
 
 
-    public User(int id, String name, String email, String password){
+    public User(ObjectId id, String name, String email, String password){
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
     }
 
-    public int getId() {
+    public ObjectId getId() {
         return id;
     }
 
@@ -36,7 +44,7 @@ public class User {
         this.email = email;
     }
 
-    public void setId(int id) {
+    public void setId(ObjectId id) {
         this.id = id;
     }
 

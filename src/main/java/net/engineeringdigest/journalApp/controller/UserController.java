@@ -28,4 +28,14 @@ public class UserController {
     public User getUserById(@PathVariable int id){
         return users.get(id);
     }
+
+    @DeleteMapping("/id/{id}")
+    public void deleteUser(@PathVariable int id){
+        users.remove(id);
+    }
+
+    @PutMapping("/id/{id}")
+    public void updateUser(@PathVariable int id, @RequestBody User updatedUser){
+        users.put(id, updatedUser);
+    }
 }

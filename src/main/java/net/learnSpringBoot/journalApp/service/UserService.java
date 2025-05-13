@@ -30,7 +30,7 @@ public class UserService {
         userRepo.deleteById(id);
     }
 
-    public void update(ObjectId id, User newUser){
+    public boolean update(ObjectId id, User newUser){
         User user = userRepo.findById(id).orElse(null);
         if (user != null){
             if (newUser.getEmail()!=null){
@@ -43,6 +43,8 @@ public class UserService {
                 user.setPassword(newUser.getPassword());
             }
             userRepo.save(user);
+            return true;
         }
+        return false;
     }
 }

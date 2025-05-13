@@ -4,8 +4,11 @@ import net.learnSpringBoot.journalApp.entity.User;
 import net.learnSpringBoot.journalApp.service.UserService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/user")
@@ -15,27 +18,34 @@ public class UserController {
     UserService userService;
 
     @GetMapping("/all")
-    public List<User> getUser(){
-        return userService.getAll();
+    public ResponseEntity<List<User>> getUser(){
+        return new ResponseEntity<>(userService.getAll(), HttpStatus.OK);
     }
 
     @PostMapping
-    public void createUser(@RequestBody User user){
+    public ResponseEntity<Boolean> createUser(@RequestBody User user){
         userService.saveUser(user);
+        return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
 
     @GetMapping("/id/{id}")
-    public User getUserById(@PathVariable ObjectId id){
-        return userService.findById(id).orElse(null);
+    public ResponseEntity<Optional<User>> getUserById(@PathVariable ObjectId id){
+        Optional<User> user = userService.findById(id);
+        if (user != null){
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @DeleteMapping("/id/{id}")
-    public void deleteUser(@PathVariable ObjectId id){
+    public ResponseEntity<Boolean> deleteUser(@PathVariable ObjectId id){
         userService.deleteById(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/id/{id}")
-    public void updateUser(@PathVariable ObjectId id, @RequestBody User updatedUser){
+    public ResponseEntity<Boolean> updateUser(@PathVariable ObjectId id, @RequestBody User updatedUser){
         userService.update(id, updatedUser);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

@@ -26,6 +26,10 @@ public class UserService {
         return userRepo.findById(id);
     }
 
+    public User findByUserName(String userName){
+        return userRepo.findByUserName(userName);
+    }
+
     public void deleteById(ObjectId id){
         userRepo.deleteById(id);
     }
@@ -33,15 +37,9 @@ public class UserService {
     public boolean update(ObjectId id, User newUser){
         User user = userRepo.findById(id).orElse(null);
         if (user != null){
-            if (newUser.getEmail()!=null){
-                user.setEmail(newUser.getEmail());
-            }
-            if (newUser.getName()!=null){
-                user.setName(newUser.getName());
-            }
-            if (newUser.getPassword()!=null){
-                user.setPassword(newUser.getPassword());
-            }
+            user.setEmail(newUser.getEmail());
+            user.setUserName(newUser.getUserName());
+            user.setPassword(newUser.getPassword());
             userRepo.save(user);
             return true;
         }

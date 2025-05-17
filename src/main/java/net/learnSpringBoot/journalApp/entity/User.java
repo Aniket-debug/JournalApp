@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.lang.annotation.Documented;
 import java.util.ArrayList;
+import java.util.List;
 
 // POJO (plain old java object)
 @Document
@@ -31,4 +32,5 @@ public class User {
     private String password;
     @DBRef
     private ArrayList<Journal> journals = new ArrayList<>();
+    private List<String> roles;
 }

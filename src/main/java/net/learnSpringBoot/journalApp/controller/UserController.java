@@ -6,6 +6,8 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,70 +20,28 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<User>> getUser() {
-        try {
-            return new ResponseEntity<>(userService.getAll(), HttpStatus.OK);
-        } catch (Exception e) {
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser(){
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
+            userService.deleteByUserName(userName);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
+        }catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-
-    @GetMapping("/id/{id}")
-    public ResponseEntity<Optional<User>> getUserById(@PathVariable ObjectId id) {
+    @PutMapping
+    public ResponseEntity<Boolean> updateUser(@RequestBody User updatedUser) {
         try {
-            Optional<User> user = userService.findById(id);
-            if (user != null) {
-                return new ResponseEntity<>(user, HttpStatus.OK);
-            }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
 
-    }
-
-    @GetMapping("/{userName}")
-    public ResponseEntity<User> getByUserName(@PathVariable String userName) {
-        try {
-            User user = userService.findByUserName(userName);
-            if (user != null) {
-                return new ResponseEntity<>(user, HttpStatus.OK);
-            }
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PostMapping
-    public ResponseEntity<Boolean> createUser(@RequestBody User user) {
-        try {
-            userService.saveUser(user);
-            return new ResponseEntity<>(true, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
-
-    @DeleteMapping("/id/{id}")
-    public ResponseEntity<Boolean> deleteUser(@PathVariable ObjectId id) {
-        try {
-            userService.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
-
-    @PutMapping("/id/{id}")
-    public ResponseEntity<Boolean> updateUser(@PathVariable ObjectId id, @RequestBody User updatedUser) {
-        try {
-            if (userService.update(id, updatedUser))
+            if (userService.update(userName, updatedUser))
                 return new ResponseEntity<>(HttpStatus.OK);
+
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

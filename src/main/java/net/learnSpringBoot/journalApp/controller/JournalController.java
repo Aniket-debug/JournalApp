@@ -8,8 +8,13 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/journal")
@@ -20,18 +25,11 @@ public class JournalController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/all")
-    public ResponseEntity<?> getAll() {
+    @GetMapping()
+    public ResponseEntity<?> getJournalOfUser() {
         try {
-            return new ResponseEntity<>(journalService.getAll(), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/username/{userName}")
-    public ResponseEntity<?> getJournalOfUser(@PathVariable String userName) {
-        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             User user = userService.findByUserName(userName);
             if (user != null) {
                 return new ResponseEntity<>(user.getJournals(), HttpStatus.OK);
@@ -42,10 +40,28 @@ public class JournalController {
         }
     }
 
-    @PostMapping("/{userName}")
-    @Transactional
-    public ResponseEntity<?> addJournal(@RequestBody Journal journal, @PathVariable String userName) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getJournalById(@PathVariable ObjectId id) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
+            User user = userService.findByUserName(userName);
+            if (user != null) {
+                List<Journal> journals = user.getJournals().stream().filter(x->x.getId().equals(id)).collect(Collectors.toList());
+                return new ResponseEntity<>(journals.get(0), HttpStatus.OK);
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping()
+    @Transactional
+    public ResponseEntity<?> addJournal(@RequestBody Journal journal) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             User user = userService.findByUserName(userName);
             if (user != null) {
                 journalService.save(journal);
@@ -59,16 +75,20 @@ public class JournalController {
         }
     }
 
-    @DeleteMapping("/{userName}/{jId}")
+    @DeleteMapping("/{jId}")
     @Transactional
-    public ResponseEntity<?> deleteJournal(@PathVariable String userName, @PathVariable ObjectId jId) {
+    public ResponseEntity<?> deleteJournal(@PathVariable ObjectId jId) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             User user = userService.findByUserName(userName);
             if (user != null) {
-                user.getJournals().removeIf(x -> x.getId().equals(jId));
-                userService.saveUser(user);
-                journalService.deleteById(jId);
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                boolean removed =  user.getJournals().removeIf(x -> x.getId().equals(jId));
+                if (removed){
+                    userService.saveUser(user);
+                    journalService.deleteById(jId);
+                    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                }
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -76,24 +96,33 @@ public class JournalController {
         }
     }
 
-    @PutMapping("/{userName}/{jId}")
+    @PutMapping("/{jId}")
     @Transactional
     public ResponseEntity<?> update(
-            @PathVariable String userName,
             @PathVariable ObjectId jId,
             @RequestBody Journal newJournal) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String userName = authentication.getName();
             User user = userService.findByUserName(userName);
-            Journal journal = journalService.getById(jId).orElse(null);
-            if (user != null && journal != null) {
-                if (newJournal.getContent() != null) {
-                    journal.setContent(newJournal.getContent());
+            if (user != null) {
+                Journal journal = null;
+                for (Journal j : user.getJournals()) {
+                    if (j.getId().equals(jId)) {
+                        journal = j;
+                    }
                 }
-                journal.setTitle(newJournal.getTitle());
-                journalService.save(journal);
-                user.getJournals().removeIf(x -> x.getId().equals(jId));
-                user.getJournals().add(journal);
-                userService.saveUser(user);
+                if (journal != null) {
+                    if (newJournal.getContent() != null) {
+                        journal.setContent(newJournal.getContent());
+                    }
+                    journal.setTitle(newJournal.getTitle());
+                    journalService.save(journal);
+                    user.getJournals().removeIf(x -> x.getId().equals(jId));
+                    user.getJournals().add(journal);
+                    userService.saveUser(user);
+                    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+                }
             }
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {

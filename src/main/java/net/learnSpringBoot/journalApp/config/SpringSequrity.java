@@ -24,8 +24,8 @@ public class SpringSequrity extends WebSecurityConfigurerAdapter {
     @Override
     protected  void configure(HttpSecurity http) throws Exception{
         http.authorizeHttpRequests()
-                .antMatchers("/journal/**", "/user/**")
-                .authenticated()
+                .antMatchers("/journal/**", "/user/**").authenticated()
+                .antMatchers("/admin/**").hasRole("Admin")
                 .anyRequest().permitAll()
                 .and()
                 .httpBasic();

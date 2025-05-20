@@ -32,5 +32,5 @@ public class User {
     private String password;
     @DBRef
     private ArrayList<Journal> journals = new ArrayList<>();
-    private List<String> roles;
+    private List<String> roles = new ArrayList<>();
 }
